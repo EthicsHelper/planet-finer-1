@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Life Finder Map</title>
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .map-container {
+            height: 80vh;
+            width: 80%;
+            position: relative;
+        }
+        .slider-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .slider-container h3 {
+            margin: 0;
+        }
+        .slider-container input {
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slider-container">
+        <h3>Adjust Life Probability Threshold:</h3>
+        <input type="range" id="lifeProbSlider" min="0" max="1" step="0.01" value="0.5">
+        <span id="lifeProbValue">0.50</span>
+    </div>
+
+    <div class="map-container" id="map"></div>
+
+    <script>
+        // Example Star/Exoplanet Data
+        const stars = [
+            {id: 1, R: 8.2, z: 0.02, theta: Math.PI / 4, mag: 5, lambda: 1.5, omegaA: 7.83, deltaJp: 0.2, Plife: 0.8, Aenv: 0.9, aInf: 0.75, Hhuman: 0.7},
+            {id: 2, R: 7.0, z: 0.01, theta: Math.PI / 3, mag: 6, lambda: 1.6, omegaA: 7.85, deltaJp: 0.3, Plife: 0.9, Aenv: 0.8, aInf: 0.7, Hhuman: 0.8},
+            {id: 3, R: 9.5, z: 0.03, theta: Math.PI / 6, mag: 4, lambda: 1.7, omegaA: 7.90, deltaJp: 0.25, Plife: 0.7, Aenv: 0.85, aInf: 0.6, Hhuman: 0.75},
+            // More data here
+        ];
+
+        // Plotting Function
+        function plotMap(lifeProbThreshold) {
+            const filteredStars = stars.filter(star => star.Plife >= lifeProbThreshold);
+
+            const trace = {
+                x: filteredStars.map(star => star.R * Math.cos(star.theta)),
+                y: filteredStars.map(star => star.R * Math.sin(star.theta)),
+                z: filteredStars.map(star => star.z),
+                mode: 'markers',
+                marker: {
+                    size: filteredStars.map(star => star.mag * 2),
+                    color: filteredStars.map(star => star.Plife),
+                    colorscale: 'Viridis',
+                    colorbar: {title: 'Life Probability'}
+                },
+                text: filteredStars.map(star => `Star ID: ${star.id}<br>Plife: ${star.Plife}`),
+                type: 'scatter3d'
+            };
+
+            const layout = {
+                title: 'Life Finder Map',
+                scene: {
+                    xaxis: {title: 'Radial Distance (kpc)'},
+                    yaxis: {title: 'Vertical Distance (kpc)'},
+                    zaxis: {title: 'Height (kpc)'}
+                },
+                hovermode: 'closest',  // Show hover information
+                dragmode: 'zoom',  // Enable zoom
+            };
+
+            Plotly.newPlot('map', [trace], layout);
+        }
+
+        // Initial Plot with 50% Life Probability Threshold
+        plotMap(0.5);
+
+        // Slider Event Listener
+        const slider = document.getElementById('lifeProbSlider');
+        const valueDisplay = document.getElementById('lifeProbValue');
+
+        slider.addEventListener('input', (event) => {
+            const lifeProbThreshold = event.target.value;
+            valueDisplay.innerText = lifeProbThreshold;
+            plotMap(lifeProbThreshold);
+        });
+    </script>
+
+</body>
+</html>
