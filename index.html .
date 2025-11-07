@@ -1,0 +1,38 @@
+import requests
+import pandas as pd
+
+def fetch_planet_data(target='399'):  # Example: 399 for Earth
+    url = "https://ssd.jpl.nasa.gov/api/horizons.api"
+    params = {
+        "format": "text",
+        "COMMAND": f"'{target}'",  # Target planet ID
+        "MAKE_EPHEM": "YES",
+        "EPHEM_TYPE": "'VECTORS'",
+        "CENTER": "'@sun'",
+        "START_TIME": "'2025-01-01'",
+        "STOP_TIME": "'2025-12-31'",
+        "STEP_SIZE": "'1 d'",
+        "CSV_FORMAT": "YES"
+    }
+
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+
+    data = response.text
+    return data
+
+# Process data into pandas DataFrame
+raw_data = fetch_planet_data()
+data_block = raw_data.splitlines()
+
+# Extract the data block between $$SOE and $$EOE
+data_start = next(i for i, line in enumerate(data_block) if "$$SOE" in line) + 1
+data_end = next(i for i, line in enumerate(data_block) if "$$EOE" in line)
+
+# Extract data and columns
+data_rows = data_block[data_start:data_end]
+headers = data_block[data_start - 1].split(',')
+
+# Create DataFrame
+df = pd.DataFrame([line.split(',') for line in data_rows], columns=headers)
+print(df.head())
